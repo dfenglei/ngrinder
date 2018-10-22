@@ -22,10 +22,12 @@ import org.ngrinder.model.PerfTest;
 import org.ngrinder.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URLClassLoader;
 import java.util.Properties;
 
 import static org.ngrinder.common.util.ExceptionUtils.processException;
@@ -53,7 +55,7 @@ public class Home {
 	private static final String PATH_STAT = "stat";
 	private final static Logger LOGGER = LoggerFactory.getLogger(Home.class);
 	private final File directory;
-	public static final String REPORT_CSV = "output.csv";
+	private static final String REPORT_CSV = "output.csv";
 
 	/**
 	 * Constructor.
@@ -100,26 +102,24 @@ public class Home {
 	}
 
 	/**
-	 * Copy the given file from given location.
-	 *
-	 * @param from file location
+	 * Copy the resource files.
 	 */
-	public void copyFrom(File from) {
-		// Copy missing files
+	public void copyFrom(Resource[] resources) {
 		try {
-			for (File file : checkNotNull(from.listFiles())) {
-				if (!(new File(directory, file.getName()).exists())) {
-					FileUtils.copyFileToDirectory(file, directory);
+			for (Resource resource : resources) {
+				File resourceFile = new File(directory, resource.getFilename());
+				if (!resourceFile.exists()) {
+					FileUtils.copyInputStreamToFile(resource.getInputStream(), new File(directory, resource.getFilename()));
 				} else {
 					File orgConf = new File(directory, "org_conf");
 					if (orgConf.mkdirs()) {
 						LOGGER.info("{}", orgConf.getPath());
 					}
-					FileUtils.copyFile(file, new File(orgConf, file.getName()));
+					FileUtils.copyInputStreamToFile(resource.getInputStream(), new File(orgConf, resource.getFilename()));
 				}
 			}
-		} catch (IOException e) {
-			throw processException("Fail to copy files from " + from.getAbsolutePath(), e);
+		} catch (IOException ie) {
+			throw processException("Fail to copy files from " + resources[0].getFilename());
 		}
 	}
 
