@@ -37,21 +37,14 @@ import org.springframework.web.filter.CompositeFilter;
  * @author JunHo Yoon
  * @since 3.0
  */
-@Profile("production")
-@Component("pluggablePreAuthFilter")
 public class PluggablePreAuthFilter implements Filter {
-	@Autowired
-	private PluginManager pluginManager;
 
 	private CompositeFilter compositeFilter;
 
 	/**
-	 * Initialize the servlet filter plugins.
-	 *
-	 * @throws ServletException
+	 * load the servlet filter plugins.
 	 */
-	@PostConstruct
-	public void init() {
+	public void loadPlugins(PluginManager pluginManager) {
 		this.compositeFilter = new CompositeFilter();
 		List<OnPreAuthServletFilter> enabledModulesByClass = pluginManager.getEnabledModulesByClass(OnPreAuthServletFilter.class);
 		this.compositeFilter.setFilters(enabledModulesByClass);
